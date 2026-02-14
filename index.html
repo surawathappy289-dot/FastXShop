@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>เติม Roblox | Fast Shop</title>
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:linear-gradient(135deg,#0f0f0f,#1a0000);
+  color:#fff;
+  text-align:center;
+}
+.container{
+  padding:50px 20px;
+}
+h1{
+  font-size:40px;
+  margin-bottom:10px;
+}
+.packages{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:20px;
+  max-width:700px;
+  margin:40px auto;
+}
+.card{
+  background:#1f1f1f;
+  padding:25px;
+  border-radius:20px;
+  cursor:pointer;
+  transition:0.3s;
+}
+.card:hover{
+  transform:scale(1.05);
+  box-shadow:0 0 25px red;
+}
+.highlight{
+  background:#ff1a1a;
+}
+.payment{
+  margin-top:40px;
+  background:#111;
+  padding:25px;
+  border-radius:20px;
+  max-width:500px;
+  margin-left:auto;
+  margin-right:auto;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+<h1>💎 เติม Roblox</h1>
+<p>เลือกแพ็ก แล้วระบบจะพาไปแชทอัตโนมัติ</p>
+
+<div class="packages">
+<div class="card" onclick="order('50 บาท')">💎 50 บาท</div>
+<div class="card" onclick="order('100 บาท')">💎 100 บาท</div>
+<div class="card" onclick="order('200 บาท')">💎 200 บาท</div>
+<div class="card highlight" onclick="order('500 บาท')">🔥 500 บาท</div>
+</div>
+
+<div class="payment">
+<h3>💰 วิธีชำระเงิน</h3>
+<p>โอน PromptPay แล้วส่งสลิปในแชท</p>
+<p>เบอร์: 08x-xxx-xxxx</p>
+</div>
+
+</div>
+
+<script>
+function order(amount){
+  var message = "สวัสดีครับ ต้องการเติม Roblox จำนวน " + amount;
+  window.open("https://m.me/ชื่อเพจของคุณ?ref=" + encodeURIComponent(message), "_blank");
+}
+</script>
+
+</body>
+</html>
