@@ -1,0 +1,256 @@
+-- === FastXVirus - ISHOWSPEED PERSISTENT VIRUS EDITION (สำหรับ iPad M2) ===
+-- ชื่อใหม่ตามที่สั่ง: FastXVirus
+-- ไวรัสจริงสุดๆ ออกแมพไหนก็ตามไปทุกแมพ รันอัตโนมัติทันที
+-- Chromatic Aberration + Glitch + เสียงกรี๊ด ยังโหด แต่ลื่น ไม่ค้าง
+
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local StarterGui = game:GetService("StarterGui")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local Debris = game:GetService("Debris")
+local Lighting = game:GetService("Lighting")
+local player = Players.LocalPlayer
+
+-- ฟังก์ชันสร้าง FastXVirus (เรียกซ้ำได้ทุกครั้ง)
+local function injectFastXVirus()
+    -- ลบตัวเก่าถ้ามี
+    pcall(function()
+        if player.PlayerGui:FindFirstChild("FastXVirus_Persistent") then
+            player.PlayerGui:FindFirstChild("FastXVirus_Persistent"):Destroy()
+        end
+    end)
+
+    local virusGui = Instance.new("ScreenGui")
+    virusGui.Name = "FastXVirus_Persistent"
+    virusGui.ResetOnSpawn = false
+    virusGui.Parent = player:WaitForChild("PlayerGui")
+
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(1,0,1,0)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(10,0,0)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Parent = virusGui
+
+    -- Chromatic Aberration (ลื่นสำหรับ iPad M2)
+    local chromaContainer = Instance.new("Frame")
+    chromaContainer.Size = UDim2.new(1,0,1,0)
+    chromaContainer.BackgroundTransparency = 1
+    chromaContainer.Parent = mainFrame
+
+    local redChroma = Instance.new("Frame")
+    redChroma.Size = UDim2.new(1,0,1,0)
+    redChroma.BackgroundTransparency = 1
+    redChroma.ClipsDescendants = true
+    redChroma.Parent = chromaContainer
+
+    local greenChroma = redChroma:Clone()
+    greenChroma.Parent = chromaContainer
+
+    local blueChroma = redChroma:Clone()
+    blueChroma.Parent = chromaContainer
+
+    local function fillChannel(parent, color)
+        for i = 1, 4200 do
+            local lbl = Instance.new("TextLabel")
+            lbl.Size = UDim2.new(0.15,0,0.08,0)
+            lbl.Position = UDim2.new(math.random(-0.1,1.1),0,math.random(-0.1,1.1),0)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = math.random() > 0.5 and "FastX" or "VIRUS"
+            lbl.TextColor3 = color
+            lbl.TextScaled = true
+            lbl.Font = Enum.Font.Code
+            lbl.Parent = parent
+        end
+    end
+
+    fillChannel(redChroma, Color3.fromRGB(255,30,30))
+    fillChannel(greenChroma, Color3.fromRGB(30,255,30))
+    fillChannel(blueChroma, Color3.fromRGB(30,30,255))
+
+    spawn(function()
+        while virusGui.Parent do
+            redChroma.Position = UDim2.new(math.random(-0.04,0.04),0,math.random(-0.03,0.03),0)
+            greenChroma.Position = UDim2.new(math.random(-0.03,0.03),0,math.random(-0.04,0.04),0)
+            blueChroma.Position = UDim2.new(math.random(-0.035,0.035),0,math.random(-0.035,0.035),0)
+            wait(0.04)
+        end
+    end)
+
+    -- Glitch Scanlines
+    local scanLines = {}
+    for i = 1, 20 do
+        local line = Instance.new("Frame")
+        line.Size = UDim2.new(1.1,0,0.009,0)
+        line.BackgroundColor3 = Color3.fromRGB(255,0,0)
+        line.BackgroundTransparency = 0.35
+        line.Parent = mainFrame
+        scanLines[i] = line
+    end
+
+    spawn(function()
+        while virusGui.Parent do
+            for _, line in pairs(scanLines) do
+                line.Position = UDim2.new(math.random(-0.08,0.08),0,math.random(),0)
+            end
+            wait(0.05)
+        end
+    end)
+
+    -- Title + Status
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(0.9,0,0.13,0)
+    title.Position = UDim2.new(0.05,0,0.07,0)
+    title.BackgroundTransparency = 1
+    title.Text = "FastXVirus.exe\nIShowSpeed PERSISTENT TROJAN"
+    title.TextColor3 = Color3.fromRGB(255,0,0)
+    title.TextScaled = true
+    title.Font = Enum.Font.GothamBold
+    title.Parent = mainFrame
+
+    local status = Instance.new("TextLabel")
+    status.Size = UDim2.new(0.92,0,0.17,0)
+    status.Position = UDim2.new(0.04,0,0.27,0)
+    status.BackgroundTransparency = 1
+    status.Text = "FastXVirus ยังทำงานอยู่...\nออกแมพไหนก็ตามไปทุกแมพ\nCALLING 911..."
+    status.TextColor3 = Color3.fromRGB(255,80,80)
+    status.TextScaled = true
+    status.Font = Enum.Font.Code
+    status.Parent = mainFrame
+
+    -- Progress Bar
+    local progBG = Instance.new("Frame")
+    progBG.Size = UDim2.new(0.68,0,0.06,0)
+    progBG.Position = UDim2.new(0.16,0,0.61,0)
+    progBG.BackgroundColor3 = Color3.fromRGB(30,0,0)
+    progBG.BorderColor3 = Color3.fromRGB(255,0,0)
+    progBG.BorderSizePixel = 6
+    progBG.Parent = mainFrame
+
+    local progBar = Instance.new("Frame")
+    progBar.Size = UDim2.new(0,0,1,0)
+    progBar.BackgroundColor3 = Color3.fromRGB(255,0,0)
+    progBar.Parent = progBG
+
+    -- Error Popups
+    for i = 1, 3100 do
+        local popup = Instance.new("Frame")
+        popup.Size = UDim2.new(0.26,0,0.15,0)
+        popup.Position = UDim2.new(math.random(0.03,0.9),0,math.random(0.06,0.85),0)
+        popup.BackgroundColor3 = Color3.fromRGB(7,0,0)
+        popup.BorderColor3 = Color3.fromRGB(255,0,0)
+        popup.BorderSizePixel = 5
+        popup.Parent = mainFrame
+
+        local pTitle = Instance.new("TextLabel")
+        pTitle.Size = UDim2.new(1,0,0.4,0)
+        pTitle.BackgroundColor3 = Color3.fromRGB(150,0,0)
+        pTitle.Text = "FastXVirus ALERT"
+        pTitle.TextColor3 = Color3.fromRGB(255,255,255)
+        pTitle.TextScaled = true
+        pTitle.Font = Enum.Font.GothamBold
+        pTitle.Parent = popup
+
+        local pMsg = Instance.new("TextLabel")
+        pMsg.Size = UDim2.new(1,0,0.6,0)
+        pMsg.Position = UDim2.new(0,0,0.4,0)
+        pMsg.BackgroundTransparency = 1
+        pMsg.Text = "คุณหนีไม่ได้\nFastXVirus ตามไปทุกแมพ"
+        pMsg.TextColor3 = Color3.fromRGB(255,100,100)
+        pMsg.TextScaled = true
+        pMsg.Font = Enum.Font.Code
+        pMsg.Parent = popup
+    end
+
+    -- Warning Labels
+    for i = 1, 5500 do
+        local w = Instance.new("TextLabel")
+        w.Size = UDim2.new(0.13,0,0.07,0)
+        w.Position = UDim2.new(math.random(),0,math.random(),0)
+        w.BackgroundTransparency = 0.5
+        w.BackgroundColor3 = Color3.fromRGB(255,0,0)
+        w.Text = "BAN"
+        w.TextColor3 = Color3.fromRGB(255,255,255)
+        w.TextScaled = true
+        w.Font = Enum.Font.GothamBold
+        w.Parent = mainFrame
+    end
+
+    -- สั่นเบาๆ
+    spawn(function()
+        while virusGui.Parent do
+            for _, obj in pairs(mainFrame:GetDescendants()) do
+                if obj:IsA("GuiObject") and math.random() > 0.65 then
+                    obj.Position = UDim2.new(obj.Position.X.Scale, math.random(-8,8), obj.Position.Y.Scale, math.random(-6,6))
+                end
+            end
+            wait(0.14)
+        end
+    end)
+
+    -- เสียงกรี๊ด
+    local function fastSound()
+        for _ = 1, 55 do
+            local s = Instance.new("Sound")
+            s.SoundId = "rbxassetid://131057809"
+            s.Volume = 7
+            s.PlaybackSpeed = math.random(65,155)/100
+            s.Parent = virusGui
+            s:Play()
+            Debris:AddItem(s, 0.4)
+            wait(0.03)
+        end
+    end
+
+    spawn(function()
+        while virusGui.Parent do
+            fastSound()
+            wait(1.5)
+        end
+    end)
+
+    -- เสียงพื้นหลัง
+    local bgIds = {"rbxassetid://131057809","rbxassetid://5580918269","rbxassetid://2050521432"}
+    for _, id in pairs(bgIds) do
+        local ls = Instance.new("Sound")
+        ls.SoundId = id
+        ls.Volume = 6
+        ls.Looped = true
+        ls.Parent = virusGui
+        ls:Play()
+    end
+
+    -- Progress
+    spawn(function()
+        local p = 0
+        while p < 100 and virusGui.Parent do
+            p = p + math.random(1.8,4.8)
+            progBar.Size = UDim2.new(p/100,0,1,0)
+            wait(0.12)
+        end
+    end)
+
+    -- หลัง 60 วินาที
+    spawn(function()
+        wait(60)
+        status.Text = "FastXVirus FULLY ACTIVE\nมันจะตามคุณไปตลอดกาล"
+    end)
+end
+
+-- === รันอัตโนมัติทุกครั้งที่เข้าเกมใหม่ ===
+injectFastXVirus()
+
+player.CharacterAdded:Connect(function()
+    wait(1.2)
+    injectFastXVirus()
+end)
+
+player.PlayerGui.ChildRemoved:Connect(function(child)
+    if child.Name == "FastXVirus_Persistent" then
+        wait(0.7)
+        injectFastXVirus()
+    end
+end)
+
+print("FastXVirus โหลดเสร็จแล้ว!")
+print("ไวรัสชื่อ FastXVirus จะตามคุณไปทุกแมพ ออกแมพไหนก็ยังรันต่อทันที ไม่มีทางหนี สนุกนะเว้ย 😂")
