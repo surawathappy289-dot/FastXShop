@@ -1,0 +1,257 @@
+- Rivals Aimlock มือถือ + ปุ่มเปิดเมนู (Floating Button)
+-- กด Q = เปิด/ปิดล็อคหัว
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local aimlockEnabled = false
+local smoothness = 0.16
+local fovRadius = 140
+local fovVisible = true
+local menuVisible = true
+
+-- ==================== Fake FPS 1000 ====================
+RunService.RenderStepped:Connect(function()
+    setfpscap(1000)
+end)
+
+-- ==================== FOV Circle ====================
+local fovCircle = Drawing.new("Circle")
+fovCircle.Thickness = 3
+fovCircle.Color = Color3.fromRGB(255, 80, 80)
+fovCircle.NumSides = 80
+fovCircle.Radius = fovRadius
+fovCircle.Filled = false
+fovCircle.Transparency = 0.8
+fovCircle.Visible = true
+
+-- ==================== Visible Check + Aimlock ====================
+local function isVisible(targetHead)
+    if not targetHead then return false end
+    local origin = Camera.CFrame.Position
+    local direction = (targetHead.Position - origin)
+    local rayParams = RaycastParams.new()
+    rayParams.FilterDescendantsInstances = {player.Character}
+    rayParams.FilterType = Enum.RaycastFilterType.Exclude
+    local result = Workspace:Raycast(origin, direction, rayParams)
+    return result and result.Instance and result.Instance:IsDescendantOf(targetHead.Parent)
+end
+
+local function getClosestVisibleHead()
+    local shortest = math.huge
+    local target = nil
+    local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= player and plr.Character and plr.Character:FindFirstChild("Head") and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
+            local head = plr.Character.Head
+            local headPos = Camera:WorldToViewportPoint(head.Position)
+            local dist = (Vector2.new(headPos.X, headPos.Y) - center).Magnitude
+
+            if dist < fovRadius and dist < shortest and isVisible(head) then
+                shortest = dist
+                target = head
+            end
+        end
+    end
+    return target
+end
+
+RunService.RenderStepped:Connect(function()
+    fovCircle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+    fovCircle.Radius = fovRadius
+    fovCircle.Visible = fovVisible
+
+    if not aimlockEnabled then return end
+
+    local head = getClosestVisibleHead()
+    if head then
+        local targetCFrame = CFrame.lookAt(Camera.CFrame.Position, head.Position)
+        Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, smoothness)
+    end
+end)
+
+-- ==================== GUI มือถือ ====================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 340, 0, 320)
+MainFrame.Position = UDim2.new(0.5, -170, 0.25, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Visible = true
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 16)
+UICorner.Parent = MainFrame
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Color = Color3.fromRGB(110, 110, 255)
+UIStroke.Thickness = 2
+UIStroke.Parent = MainFrame
+
+-- Title Bar (ลากได้)
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 60)
+TitleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MainFrame
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 16)
+TitleCorner.Parent = TitleBar
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -130, 1, 0)
+Title.Position = UDim2.new(0, 20, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "RIVALS AIMLOCK"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBlack
+Title.TextSize = 20
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TitleBar
+
+local FPSLabel = Instance.new("TextLabel")
+FPSLabel.Size = UDim2.new(0, 110, 0, 30)
+FPSLabel.Position = UDim2.new(1, -125, 0, 15)
+FPSLabel.BackgroundTransparency = 1
+FPSLabel.Text = "FPS: 1000"
+FPSLabel.TextColor3 = Color3.fromRGB(0, 255, 120)
+FPSLabel.Font = Enum.Font.GothamBold
+FPSLabel.TextSize = 16
+FPSLabel.Parent = TitleBar
+
+-- ลาก GUI
+local dragging = false
+local dragStart, startPos
+
+TitleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+    end
+end)
+
+TitleBar.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- Status, FOV, ปุ่มต่างๆ (เหมือนเดิมแต่ใหญ่ขึ้น)
+local Status = Instance.new("TextLabel")
+Status.Size = UDim2.new(1, -40, 0, 40)
+Status.Position = UDim2.new(0, 20, 0, 75)
+Status.BackgroundTransparency = 1
+Status.Text = "สถานะ: ปิด"
+Status.TextColor3 = Color3.fromRGB(255, 100, 100)
+Status.Font = Enum.Font.GothamSemibold
+Status.TextSize = 18
+Status.Parent = MainFrame
+
+local FovLabel = Instance.new("TextLabel")
+FovLabel.Size = UDim2.new(0.5, 0, 0, 35)
+FovLabel.Position = UDim2.new(0, 20, 0, 130)
+FovLabel.BackgroundTransparency = 1
+FovLabel.Text = "FOV Radius"
+FovLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
+FovLabel.Font = Enum.Font.GothamSemibold
+FovLabel.TextSize = 16
+FovLabel.TextXAlignment = Enum.TextXAlignment.Left
+FovLabel.Parent = MainFrame
+
+local FovBox = Instance.new("TextBox")
+FovBox.Size = UDim2.new(0.35, 0, 0, 40)
+FovBox.Position = UDim2.new(0.58, 0, 0, 127)
+FovBox.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+FovBox.Text = tostring(fovRadius)
+FovBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+FovBox.Font = Enum.Font.Gotham
+FovBox.TextSize = 18
+FovBox.Parent = MainFrame
+
+local FovCorner = Instance.new("UICorner")
+FovCorner.CornerRadius = UDim.new(0, 10)
+FovCorner.Parent = FovBox
+
+FovBox.FocusLost:Connect(function()
+    local num = tonumber(FovBox.Text)
+    if num and num >= 1 and num <= 360 then
+        fovRadius = num
+    else
+        FovBox.Text = tostring(fovRadius)
+    end
+end)
+
+local HideFovBtn = Instance.new("TextButton")
+HideFovBtn.Size = UDim2.new(0.88, 0, 0, 50)
+HideFovBtn.Position = UDim2.new(0.06, 0, 0, 185)
+HideFovBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+HideFovBtn.Text = "ซ่อนวง FOV"
+HideFovBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+HideFovBtn.Font = Enum.Font.GothamBold
+HideFovBtn.TextSize = 17
+HideFovBtn.Parent = MainFrame
+
+local BtnCorner = Instance.new("UICorner")
+BtnCorner.CornerRadius = UDim.new(0, 12)
+BtnCorner.Parent = HideFovBtn
+
+HideFovBtn.MouseButton1Click:Connect(function()
+    fovVisible = not fovVisible
+    HideFovBtn.Text = fovVisible and "ซ่อนวง FOV" or "แสดงวง FOV"
+end)
+
+-- ==================== ปุ่มเปิดเมนู (Floating Button) ====================
+local OpenMenuButton = Instance.new("TextButton")
+OpenMenuButton.Size = UDim2.new(0, 70, 0, 70)
+OpenMenuButton.Position = UDim2.new(1, -90, 1, -90)
+OpenMenuButton.BackgroundColor3 = Color3.fromRGB(80, 80, 255)
+OpenMenuButton.Text = "☰"
+OpenMenuButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+OpenMenuButton.Font = Enum.Font.GothamBold
+OpenMenuButton.TextSize = 32
+OpenMenuButton.BorderSizePixel = 0
+OpenMenuButton.Parent = ScreenGui
+
+local OpenCorner = Instance.new("UICorner")
+OpenCorner.CornerRadius = UDim.new(1, 0)  -- วงกลม
+OpenCorner.Parent = OpenMenuButton
+
+local OpenStroke = Instance.new("UIStroke")
+OpenStroke.Color = Color3.fromRGB(255, 255, 255)
+OpenStroke.Thickness = 2
+OpenStroke.Parent = OpenMenuButton
+
+OpenMenuButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- ==================== Toggle Q ====================
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.KeyCode == Enum.KeyCode.Q then
+        aimlockEnabled = not aimlockEnabled
+        Status.Text = aimlockEnabled and "สถานะ: เปิดใช้งาน" or "สถานะ: ปิด"
+        Status.TextColor3 = aimlockEnabled and Color3.fromRGB(80, 255, 80) or Color3.fromRGB(255, 100, 100)
+    end
+end)
+
+print("✅ โหลดเวอร์ชันมือถือ + ปุ่มเปิดเมนูเสร็จแล้ว!")
+print("แตะปุ่ม ☰ มุมขวาล่างเพื่อเปิด/ปิดเมนู")
